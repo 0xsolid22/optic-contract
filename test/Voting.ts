@@ -86,60 +86,58 @@ describe('Voting', function () {
         expect(await voting.registered(otherAccount.address)).to.equal(true);
       });
     });
+  });
 
-    describe('Vote', function () {
-      it('Should revert if unregistered voter tries to vote', async function () {
-        const { voting, otherAccount } = await loadFixture(deployFixture);
+  describe('Vote', function () {
+    it('Should revert if unregistered voter tries to vote', async function () {
+      const { voting, otherAccount } = await loadFixture(deployFixture);
 
-        // await time.increaseTo(unlockTime);
+      // await time.increaseTo(unlockTime);
 
-        await expect(voting.connect(otherAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
-          voting,
-          'NotRegistered'
-        );
-      });
+      await expect(voting.connect(otherAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
+        voting,
+        'NotRegistered'
+      );
+    });
 
-      it('Should revert if voting not started yet or ended already', async function () {
-        const { voting, endTime, registeredAccount } = await loadFixture(deployFixture);
-        await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
-          voting,
-          'VoteNotAvailable'
-        );
-        await time.increaseTo(endTime + 1);
-        await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
-          voting,
-          'VoteNotAvailable'
-        );
-      });
+    it('Should revert if voting not started yet or ended already', async function () {
+      const { voting, endTime, registeredAccount } = await loadFixture(deployFixture);
+      await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
+        voting,
+        'VoteNotAvailable'
+      );
+      await time.increaseTo(endTime + 1);
+      await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
+        voting,
+        'VoteNotAvailable'
+      );
+    });
 
-      it('Should revert if candidate is invalid', async function () {
-        const { voting, startTime, registeredAccount } = await loadFixture(deployFixture);
-        await time.increaseTo(startTime + 1);
-        await expect(voting.connect(registeredAccount).vote(0)).to.be.revertedWithCustomError(
-          voting,
-          'InvalidCandidate'
-        );
-        await expect(
-          voting.connect(registeredAccount).vote(DEFAULT_CANDIDATES_COUNT + 1)
-        ).to.be.revertedWithCustomError(voting, 'InvalidCandidate');
-      });
+    it('Should revert if candidate is invalid', async function () {
+      const { voting, startTime, registeredAccount } = await loadFixture(deployFixture);
+      await time.increaseTo(startTime + 1);
+      await expect(voting.connect(registeredAccount).vote(0)).to.be.revertedWithCustomError(voting, 'InvalidCandidate');
+      await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATES_COUNT + 1)).to.be.revertedWithCustomError(
+        voting,
+        'InvalidCandidate'
+      );
+    });
 
-      it('Should vote only once', async function () {
-        const { voting, startTime, registeredAccount } = await loadFixture(deployFixture);
-        await time.increaseTo(startTime + 1);
+    it('Should vote only once', async function () {
+      const { voting, startTime, registeredAccount } = await loadFixture(deployFixture);
+      await time.increaseTo(startTime + 1);
 
-        await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE))
-          .to.emit(voting, 'Voted')
-          .withArgs(DEFAULT_CANDIDATE, registeredAccount.address);
+      await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE))
+        .to.emit(voting, 'Voted')
+        .withArgs(DEFAULT_CANDIDATE, registeredAccount.address);
 
-        expect(await voting.voteResult(registeredAccount.address)).to.equal(DEFAULT_CANDIDATE);
+      expect(await voting.voteResult(registeredAccount.address)).to.equal(DEFAULT_CANDIDATE);
 
-        await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
-          voting,
-          'AlreadyVoted'
-        );
-        expect(await voting.voteCount(DEFAULT_CANDIDATE)).to.equal(1);
-      });
+      await expect(voting.connect(registeredAccount).vote(DEFAULT_CANDIDATE)).to.be.revertedWithCustomError(
+        voting,
+        'AlreadyVoted'
+      );
+      expect(await voting.voteCount(DEFAULT_CANDIDATE)).to.equal(1);
     });
   });
 });
